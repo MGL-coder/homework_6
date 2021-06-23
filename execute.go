@@ -18,16 +18,20 @@ func Execute(tasks []func() error, N int, E int) error {
 
 	for index, task := range tasks {
 		ch <- struct{}{}
+		mu.Lock()
 		if E < 1 {
 			break
 		}
+		mu.Unlock()
 
 		i, t := index, task
 		go func() {
 			//fmt.Println("Running task", i)
-			if t() != nil {
-				mu.Lock()
-				defer mu.Unlock()
+			err := t()
+			mu.Lock()
+			defer mu.Unlock()
+
+			if err != nil {
 				E--
 				//fmt.Println("Error detected")
 			}
